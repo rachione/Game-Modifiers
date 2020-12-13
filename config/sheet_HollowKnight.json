@@ -2,11 +2,10 @@
     "procName": "hollow_knight",
     "isMono": true,
     "sheets": [
-        {
-            "desc": "No Collision",
-            "hackType": "fillNop",
-            "targetAddr": "HeroBox:ApplyBufferedHit:2F",
-            "memSize": 5
-        }
-    ]
+    {
+        "desc": "No Collision",
+        "hackType": "fillNop",
+        "targetAddr": "HeroBox:ApplyBufferedHit:2F",
+        "memSize": 5
+    }]
 }

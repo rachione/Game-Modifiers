@@ -5,8 +5,8 @@
     {
         "desc": "No Damage",
         "hackType": "replaceNewCode",
-        "targetAddr": "042E95C",       
-		"memSize": 6,
+        "targetAddr": "042E95C",
+        "memSize": 6,
         "newBytecode": "909090909090"
     }]
 }
