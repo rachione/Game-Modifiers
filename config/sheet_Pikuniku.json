@@ -1,0 +1,54 @@
+{
+    "procName": "Pikuniku",
+    "isMono": true,
+    "sheets": [
+    {
+        "desc": "super kick",
+        "hackType": "injectCode",
+        "targetAddr": "KickModule:CollisionWithKick+31e",
+        "memSize": 5,
+        "injectSet":
+        {
+            "opcode": [
+                "mov dword ptr [ebx+0x3C],$val;",
+                "fld dword ptr [ebx+0x3C];",
+                "fldz;"
+            ],
+            "valType": "float",
+            "newVal": "100"
+        }
+
+    },
+    {
+        "desc": "kick everyone",
+        "hackType": "fillNop",
+        "targetAddr": "KickModule:CollisionWithKick+318",
+        "memSize": 6
+
+    },
+    {
+        "desc": "jump",
+        "hackType": "injectCode",
+        "targetAddr": "Piku:MoveUpdate_Walk+886",
+        "memSize": 6,
+        "injectSet":
+        {
+            "opcode": [
+                "mov dword ptr [edi+0x98],$val;",
+                "fld dword ptr [edi+0x98];"
+            ],
+            "valType": "float",
+            "newVal": "10"
+        }
+
+    },
+    {
+        "desc": "no dialogue",
+        "hackType": "replaceNewCode",
+        "targetAddr": "Piku:BehaviorStart_StickTo+0",
+        "memSize": 1,
+        "newBytecode": "c3"
+
+
+    }]
+}
