@@ -1,0 +1,57 @@
+<RootUI>:
+    cols:1
+    rows:2
+
+<HackGridUI>:
+    cols:5
+    rows:5
+    padding: [5, 5]
+    spacing: [5, 5]
+    row_force_default:True
+    row_default_height:90
+    col_default_width:90
+    size_hint_y: 1.8
+
+<OnlineCellUI>:
+    
+    Label:
+        id: onlineLbl
+        center_x:  root.right-root.width + 40
+        center_y:  root.top -20
+        font_size: 18
+        text: "online"
+        color: 0, 1, 0, 1
+    Button:
+        id: reloadBtn
+        center_x: root.right-root.width + 40
+        center_y: root.top -50
+        text:  "reload"
+        size: 50, 25
+        font_size: 14
+        disabled: True
+<HackCellUI>:
+    cols:1
+    rows:3
+    row_force_default:True
+    row_default_height:30
+    Label:
+        id: hackLbl
+        font_size: 18
+        text: ""
+    TextInput:
+        id: hackTxtBox
+        halign:"right"
+        line_height: 1
+        input_filter: "float"
+        multiline: False
+        text: ""
+    Button:
+        id: hackBtn
+        text:  "off"
+        color: 1, 0, 0, 1
+        font_size: 16
+
+
+    
+
+  
