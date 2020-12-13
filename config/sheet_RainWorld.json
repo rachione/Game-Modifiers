@@ -1,0 +1,86 @@
+{
+    "procName": "RainWorld",
+    "isMono": true,
+    "sheets": [
+    {
+        "desc": "infinite lung",
+        "hackType": "fillNopShift",
+        "targetAddr": "Player:orig_Update+40f7",
+        "memSize": 5,
+        "shiftRange": [
+            -200,
+            200
+        ],
+        "regex": [
+            "83ec0c",
+            "56",
+            "3936",
+            "(e8.{8})"
+        ]
+    },
+    {
+        "desc": "add food",
+        "hackType": "fillNopShift",
+        "targetAddr": "Player:orig_Update+5741",
+        "memSize": 5,
+        "shiftRange": [
+            -200,
+            200
+        ],
+        "regex": [
+            "(7445",
+            "83ec0c)"
+        ]
+    },
+    {
+        "desc": "no rain",
+        "hackType": "fillNopShift",
+        "targetAddr": "RainCycle:Update+1a",
+        "memSize": 5,
+        "shiftRange": [
+            -50,
+            50
+        ],
+        "regex": [
+            "(e8.{8})",
+            "83c410"
+        ]
+    },
+    {
+        "desc": "no bomb effect",
+        "hackType": "injectOrCondition",
+        "targetAddr": "Explosion:Update+4ca",
+        "memSize": 6,
+        "injectSet":
+        {
+            "opcode": [
+                "mov eax,dword ptr[esi+0x14];",
+                "cmp ecx,eax;"
+            ],
+            "valType": "none"
+        }
+    },
+    {
+        "desc": "no stun",
+        "hackType": "replaceNewCode",
+        "targetAddr": "Player:Stun+0",
+        "memSize": 1,
+        "newBytecode": "c3"
+    },
+    {
+        "desc": "jump high",
+        "hackType": "injectCode",
+        "targetAddr": "Player:Jump+ff",
+        "memSize": 6,
+        "injectSet":
+        {
+            "opcode": [
+                "mov dword ptr[ebp-0x14],$val;",
+                "mov eax,dword ptr[edi+0x58];"
+            ],
+            "valType": "float",
+            "newVal": "3"
+        }
+
+    }]
+}
