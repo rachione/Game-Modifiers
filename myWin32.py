@@ -1,9 +1,7 @@
-
 import sys
 
 from keystone import *
 from capstone import *
-
 
 from ctypes import Structure
 from ctypes import c_ulong, c_byte, c_wchar_p, c_size_t, c_long, c_int, c_uint, c_char, c_ubyte, c_char_p, c_void_p, CFUNCTYPE
@@ -16,15 +14,11 @@ import win32pdhutil
 import win32process
 import os
 
-
 TH32CS_SNAPMODULE = 0x00000008
 INFINITE = 0xFFFFFFFF
 WAIT_FAILED = 0xFFFFFFFF
 
-
-loadLibraryFlags = {
-    'DONT_RESOLVE_DLL_REFERENCES': 0x00000001
-}
+loadLibraryFlags = {'DONT_RESOLVE_DLL_REFERENCES': 0x00000001}
 
 privileges = {
     'PROCESS_ALL_ACCESS': 0x1F0FFF,
@@ -33,7 +27,6 @@ privileges = {
     'PROCESS_VM_READ': 0x0010,
     'PROCESS_VM_WRITE': 0x0020,
 }
-
 
 mem_states = {
     'MEM_COMMIT': 0x1000,
@@ -64,13 +57,11 @@ page_protections = {
     'PAGE_WRITECOPY': 0x08,
 }
 
-mem_states['MEM_CREATE'] = (
-    mem_states['MEM_COMMIT'] |
-    mem_states['MEM_RESERVE'])
+mem_states['MEM_CREATE'] = (mem_states['MEM_COMMIT']
+                            | mem_states['MEM_RESERVE'])
 
 
 class Asm:
-
     def __init__(self):
         self.ks = Ks(KS_ARCH_X86, KS_MODE_32)
         self.md = Cs(CS_ARCH_X86, CS_MODE_64)
@@ -123,6 +114,7 @@ class MemCtrl:
             self.PID = pids[0]
             self.procHandle = self.kernel32.OpenProcess(
                 privileges['PROCESS_ALL_ACCESS'], False, self.PID)
+            self.baseAddr = win32process.EnumProcessModules(self.procHandle)[0]
             return True
 
     def monoFeature(self):
@@ -132,8 +124,9 @@ class MemCtrl:
     def createRemoteThreadByVal(self, funcAddr, args):
 
         dllAddr = c_int(0)
-        thread = self.kernel32.CreateRemoteThread(self.procHandle, None, None, c_int(funcAddr),
-                                                  c_int(args), None, None)
+        thread = self.kernel32.CreateRemoteThread(self.procHandle, None, None,
+                                                  c_int(funcAddr), c_int(args),
+                                                  None, None)
         if not thread:
             raise WinError()
         if self.kernel32.WaitForSingleObject(thread, INFINITE) == WAIT_FAILED:
@@ -147,7 +140,8 @@ class MemCtrl:
 
         dllAddr = c_int(0)
         argsAddr = self.allocRemoteMem(args, len(args))
-        thread = self.kernel32.CreateRemoteThread(self.procHandle, None, None, c_int(funcAddr),
+        thread = self.kernel32.CreateRemoteThread(self.procHandle, None, None,
+                                                  c_int(funcAddr),
                                                   c_int(argsAddr), None, None)
         if not thread:
             raise WinError()
@@ -159,24 +153,21 @@ class MemCtrl:
         return dllAddr.value
 
     def mono_compile_method(self, method):
-        return self.createRemoteThreadByVal(self.mono_compile_method_addr, method)
+        return self.createRemoteThreadByVal(self.mono_compile_method_addr,
+                                            method)
 
     def getJITAddr(self, className, methodName):
 
         dllPathBytes = self.targetDllPath.encode('utf-8')
-        dllPathAddr = self.allocRemoteMem(
-            dllPathBytes, len(dllPathBytes))
+        dllPathAddr = self.allocRemoteMem(dllPathBytes, len(dllPathBytes))
 
         clsNameBytes = className.encode('utf-8')
-        clsNameAddr = self.allocRemoteMem(
-            clsNameBytes, len(clsNameBytes))
+        clsNameAddr = self.allocRemoteMem(clsNameBytes, len(clsNameBytes))
 
         funcNameBytes = methodName.encode('utf-8')
-        funcNameAddr = self.allocRemoteMem(
-            funcNameBytes, len(funcNameBytes))
+        funcNameAddr = self.allocRemoteMem(funcNameBytes, len(funcNameBytes))
 
-        args = struct.pack("3i", dllPathAddr,
-                           clsNameAddr, funcNameAddr)
+        args = struct.pack("3i", dllPathAddr, clsNameAddr, funcNameAddr)
         methodId = self.createRemoteTreadByRef(
             self.mono_class_get_method_from_name_addr, args)
 
@@ -189,13 +180,13 @@ class MemCtrl:
     def injectDllInit(self):
         path_dll = os.path.abspath("MonoInjector.dll")
         buffer = path_dll.encode("ascii")
-        funcAddr = self.get_address_from_module(
-            "kernel32.dll", "LoadLibraryA")
+        funcAddr = self.get_address_from_module("kernel32.dll", "LoadLibraryA")
         self.dllAddr = self.createRemoteTreadByRef(funcAddr, buffer)
         self.mono_compile_method_addr = self.getFuncAddr(
             "MonoInjector.dll", b"do_mono_compile_method", self.dllAddr)
         self.mono_class_get_method_from_name_addr = self.getFuncAddr(
-            "MonoInjector.dll", b"do_mono_class_get_method_from_name", self.dllAddr)
+            "MonoInjector.dll", b"do_mono_class_get_method_from_name",
+            self.dllAddr)
 
     def getTargetDllPath(self):
         procName = win32process.GetModuleFileNameEx(self.procHandle, 0)
@@ -217,32 +208,34 @@ class MemCtrl:
         module_addr = self.kernel32.GetModuleHandleA(module.encode("ascii"))
         if not module_addr:
             raise WinError()
-        funcAddr = self.kernel32.GetProcAddress(
-            module_addr, function.encode("ascii"))
+        funcAddr = self.kernel32.GetProcAddress(module_addr,
+                                                function.encode("ascii"))
         if not module_addr:
             raise WinError()
         return funcAddr
 
     def ReadProcessMemory(self, targetAddr, buf):
         size = len(buf)
-        return self.kernel32.ReadProcessMemory(
-            self.procHandle, targetAddr, buf, size, 0)
+        return self.kernel32.ReadProcessMemory(self.procHandle, targetAddr,
+                                               buf, size, 0)
 
     def WriteProcessMemory(self, targetAddr, buf):
         size = len(buf)
-        self.kernel32.WriteProcessMemory(
-            self.procHandle, targetAddr, buf, size, 0)
+        self.kernel32.WriteProcessMemory(self.procHandle, targetAddr, buf,
+                                         size, 0)
 
     def virtualFreeEX(self, addr):
         if self.procHandle != None:
             if (self.kernel32.VirtualFreeEx(
-                    self.procHandle, addr, 0, memFree_types['MEM_RELEASE']) == 0):
+                    self.procHandle, addr, 0,
+                    memFree_types['MEM_RELEASE']) == 0):
                 raise MemCtrlError('Failed virtualFree ' +
                                    '{}'.format(self.get_last_error()))
 
     def allocExecMem(self):
         baseaddress = self.kernel32.VirtualAllocEx(
-            self.procHandle, 0, 0x400, mem_states['MEM_COMMIT'], page_protections['PAGE_EXECUTE_READWRITE'])
+            self.procHandle, 0, 0x400, mem_states['MEM_COMMIT'],
+            page_protections['PAGE_EXECUTE_READWRITE'])
         assert baseaddress != 0
         return baseaddress
 
@@ -252,8 +245,9 @@ class MemCtrl:
         return alloc
 
     def allocMem(self, size):
-        alloc = self.kernel32.VirtualAllocEx(self.procHandle, None, c_int(size),
-                                             mem_states['MEM_CREATE'], page_protections['PAGE_EXECUTE_READWRITE'])
+        alloc = self.kernel32.VirtualAllocEx(
+            self.procHandle, None, c_int(size), mem_states['MEM_CREATE'],
+            page_protections['PAGE_EXECUTE_READWRITE'])
         if not alloc:
             raise WinError()
         return alloc

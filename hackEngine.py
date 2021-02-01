@@ -7,9 +7,9 @@ import sys
 import os
 import re
 
-
 # pyinstaller --name lf2Hack --onefile --noconsole main.py
 # pyinstaller main.spec
+
 
 class ResolveType(IntEnum):
     replaceNewCode = auto()
@@ -39,7 +39,6 @@ class HackUnit:
     isMono = False
     targetAddrRaw = None
     targetAddr = None
-    allocAddr = None
     memSize = None
     shiftRange = []
     regex = []
@@ -59,8 +58,7 @@ class HackUnit:
         self.isMono = isMono
 
     def setNewBytecode(self, opcode):
-        self.newBytecode = (c_byte * len(opcode)
-                            )(*opcode)
+        self.newBytecode = (c_byte * len(opcode))(*opcode)
 
     def hackMemInit(self):
         pass
@@ -111,11 +109,13 @@ class HackUnit:
     def targetAddrInit(self):
         if self.isMono:
             className, methodName, offset = self.monoTargetAddrSplit()
-            JITAddr = self.memCtrl.getJITAddr(
-                className, methodName)
+            JITAddr = self.memCtrl.getJITAddr(className, methodName)
             print("%s:%s+%s = %s" %
                   (className, methodName, hex(offset), hex(JITAddr)))
             self.targetAddr = JITAddr + offset
+        elif 'base+' in self.targetAddrRaw:
+            offset = self.targetAddrRaw.split('+')[1]
+            self.targetAddr = self.memCtrl.baseAddr + int(offset, 16)
         else:
             self.targetAddr = int(self.targetAddrRaw, 16)
 
@@ -132,8 +132,7 @@ class HackUnit:
         endAddr = self.targetAddr + self.shiftRange[1]
         buffer = (c_byte * (endAddr - startAddr))()
         self.memCtrl.ReadProcessMemory(startAddr, buffer)
-        haystackStr = ''.join([hex(x & 0xff)[2:].zfill(2)
-                               for x in buffer])
+        haystackStr = ''.join([hex(x & 0xff)[2:].zfill(2) for x in buffer])
         match = [x for x in re.finditer(self.regex, haystackStr)]
 
         assert len(match) > 0
@@ -150,16 +149,16 @@ class HackUnit:
             onoffDesc = "off"
             bytecode = self.origBytecode
 
-        print("%s %s:%s" % (self.desc, onoffDesc, struct.unpack(
-            '<%ds' % len(bytecode), bytecode)[0].hex()))
+        print("%s %s:%s" %
+              (self.desc, onoffDesc,
+               struct.unpack('<%ds' % len(bytecode), bytecode)[0].hex()))
 
     def writeTargetMem(self, isNew):
         if isNew:
             buf = self.newBytecode
         else:
             buf = self.origBytecode
-        self.memCtrl.WriteProcessMemory(
-            self.targetAddr, buf)
+        self.memCtrl.WriteProcessMemory(self.targetAddr, buf)
 
     def hackMem(self):
         buf = (c_byte * self.memSize)()
@@ -183,7 +182,6 @@ class HackUnit:
 
 
 class HackUnit_fillNop(HackUnit):
-
     def __init__(self, memCtrl, isMono):
         super(HackUnit_fillNop, self).__init__(memCtrl, isMono)
 
@@ -192,7 +190,6 @@ class HackUnit_fillNop(HackUnit):
 
 
 class HackUnit_fillNopShift(HackUnit):
-
     def __init__(self, memCtrl, isMono):
         super(HackUnit_fillNopShift, self).__init__(memCtrl, isMono)
 
@@ -202,7 +199,6 @@ class HackUnit_fillNopShift(HackUnit):
 
 
 class HackUnit_jmpChangeShift(HackUnit):
-
     def __init__(self, memCtrl, isMono):
         super(HackUnit_jmpChangeShift, self).__init__(memCtrl, isMono)
 
@@ -250,8 +246,7 @@ class HackUnit_injectCode(HackUnit):
         return (c_byte * len(bytecode))(*bytecode)
 
     def makeJmpToInjectCode(self):
-        jmpCode = self.asm.makeJmpCode(
-            self.targetAddr, self.injectCodeAddr)
+        jmpCode = self.asm.makeJmpCode(self.targetAddr, self.injectCodeAddr)
         if len(jmpCode) < self.memSize:
             fillNopCount = self.memSize - len(jmpCode)
             jmpCode += ([0x90] * fillNopCount)
@@ -293,7 +288,6 @@ class HackUnit_injectCode(HackUnit):
 
 
 class HackUnit_injectOrCondition(HackUnit_injectCode):
-
     def __init__(self, memCtrl, isMono):
         super(HackUnit_injectOrCondition, self).__init__(memCtrl, isMono)
 
@@ -307,8 +301,8 @@ class HackUnit_injectOrCondition(HackUnit_injectCode):
     def copyOrigCondCode(self, bytecode, jmpDestAddr):
         origCond = [x & 0xff for x in self.origBytecode]
         mnem = self.asm.disasm(bytes(origCond), 0x0)[0].mnemonic
-        jmpCode = self.asm.makeJmpCode(
-            self.injectCodeAddr + len(bytecode), jmpDestAddr, mnem)
+        jmpCode = self.asm.makeJmpCode(self.injectCodeAddr + len(bytecode),
+                                       jmpDestAddr, mnem)
 
         return jmpCode
 
@@ -354,8 +348,8 @@ class ProcMemoryMain:
 
             for _, sheetData in enumerate(sheets):
                 type = ResolveType[sheetData['hackType']]
-                h = hackUnitHandlers.get(type, HackUnit)(
-                    self.memCtrl, self.isMono)
+                h = hackUnitHandlers.get(type, HackUnit)(self.memCtrl,
+                                                         self.isMono)
                 h.resolve(sheetData)
                 self.hackUnits.append(h)
 
@@ -372,6 +366,7 @@ class ProcMemoryMain:
             return
 
     def hackMemInit(self):
+
         for h in self.hackUnits:
             h.hackMemInit()
 

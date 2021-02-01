@@ -14,29 +14,23 @@ import os
 # pyinstaller --name hollowKnight --onefile --noconsole main.py
 # pyinstaller main.spec
 
-IconPath = 'Icon.ico'
-
 
 class RootUI(GridLayout):
-
     def __init__(self, **kwargs):
         super(RootUI, self).__init__(**kwargs)
 
 
 class HackGridUI(GridLayout):
-
     def __init__(self, **kwargs):
         super(HackGridUI, self).__init__(**kwargs)
 
 
 class OnlineCellUI(Widget):
-
     def __init__(self, **kwargs):
         super(OnlineCellUI, self).__init__(**kwargs)
 
 
 class HackCellUI(GridLayout):
-
     def __init__(self, **kwargs):
         super(HackCellUI, self).__init__(**kwargs)
 
@@ -95,11 +89,10 @@ class HackCell:
 
 
 class CheatApp(App):
-
     def __init__(self, **kwargs):
         super(CheatApp, self).__init__(**kwargs)
         self.title = 'Game Cheat'
-        self.icon = IconPath
+        self.icon = 'Icon.png'
 
         Config.set('graphics', 'width', '500')
         Config.set('graphics', 'height', '500')
@@ -132,9 +125,14 @@ class CheatApp(App):
 
     def onlineState(self, isOnline):
         lblStyles = {
-            True: {'text': 'online', 'color': (0, 1, 0, 1)},
-            False: {'text': 'offline', 'color': (1, 0, 0, 1)}
-
+            True: {
+                'text': 'online',
+                'color': (0, 1, 0, 1)
+            },
+            False: {
+                'text': 'offline',
+                'color': (1, 0, 0, 1)
+            }
         }
         for x in range(self.cheatBtnLen):
             self.hackCells[x].btnDisable(not isOnline)
