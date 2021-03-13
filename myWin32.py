@@ -114,7 +114,8 @@ class MemCtrl:
             self.PID = pids[0]
             self.procHandle = self.kernel32.OpenProcess(
                 privileges['PROCESS_ALL_ACCESS'], False, self.PID)
-            self.baseAddr = win32process.EnumProcessModules(self.procHandle)[0]
+            self.baseAddr = win32process.EnumProcessModulesEx(
+                self.procHandle)[0]
             return True
 
     def monoFeature(self):
