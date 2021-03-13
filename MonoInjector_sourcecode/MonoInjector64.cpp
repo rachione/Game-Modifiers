@@ -2,8 +2,8 @@
 #include <windows.h>
 #include <stdlib.h>
 
-//gcc -c MonoInjector.cpp
-//gcc -shared -o MonoInjector.dll -Wl,--out-implib,libtstdll.a MonoInjector.o
+//gcc -m64 -c MonoInjector.cpp
+//gcc -m64 -shared -o MonoInjector.dll -Wl,--out-implib,libtstdll.a MonoInjector.o
 typedef void *(__cdecl *MONO_GET_ROOT_DOMAIN)(void);
 typedef void *(__cdecl *MONO_THREAD_ATTACH)(void *domain);
 typedef void(__cdecl *MONO_THREAD_DETACH)(void *monothread);

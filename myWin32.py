@@ -137,7 +137,7 @@ class MemCtrl:
 
         return dllAddr.value
 
-    def createRemoteTreadByRef(self, funcAddr, args):
+    def createRemoteThreadByRef(self, funcAddr, args):
 
         dllAddr = c_int(0)
         argsAddr = self.allocRemoteMem(args, len(args))
@@ -169,7 +169,7 @@ class MemCtrl:
         funcNameAddr = self.allocRemoteMem(funcNameBytes, len(funcNameBytes))
 
         args = struct.pack("3i", dllPathAddr, clsNameAddr, funcNameAddr)
-        methodId = self.createRemoteTreadByRef(
+        methodId = self.createRemoteThreadByRef(
             self.mono_class_get_method_from_name_addr, args)
 
         self.virtualFreeEX(dllPathAddr)
@@ -182,7 +182,8 @@ class MemCtrl:
         path_dll = os.path.abspath("MonoInjector.dll")
         buffer = path_dll.encode("ascii")
         funcAddr = self.get_address_from_module("kernel32.dll", "LoadLibraryA")
-        self.dllAddr = self.createRemoteTreadByRef(funcAddr, buffer)
+        self.dllAddr = self.createRemoteThreadByRef(funcAddr, buffer)
+        print("Dll Address%x" % self.dllAddr)
         self.mono_compile_method_addr = self.getFuncAddr(
             "MonoInjector.dll", b"do_mono_compile_method", self.dllAddr)
         self.mono_class_get_method_from_name_addr = self.getFuncAddr(
